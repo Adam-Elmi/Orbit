@@ -1,0 +1,22 @@
+{
+	"name": "orbit",
+	"version": "1.0.0",
+	"private": true,
+	"description": "A calculator with sessions you slide between",
+	"type": "module",
+	"scripts": {
+		"build": "arcm build pages",
+		"watch": "node scripts/watch.js",
+		"test": "vitest run",
+		"dev": "tauri dev",
+		"app": "tauri build"
+	},
+	"dependencies": {
+		"arcmoon": "^1.0.0",
+		"mathjs": "^15.2.0"
+	},
+	"devDependencies": {
+		"@tauri-apps/cli": "^2.12.3",
+		"vitest": "^5.0.5"
+	}
+}

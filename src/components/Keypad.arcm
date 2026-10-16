@@ -1,0 +1,79 @@
+# ###################
+# The keypad: every key is a button with data-key; the page listens for clicks on the whole pad
+# ###################
+${
+  const keys = [
+    { key: "C", kind: "fn", label: "C" },
+    { key: "(", kind: "fn", label: "(" },
+    { key: ")", kind: "fn", label: ")" },
+    { key: "⌫", kind: "fn", label: "⌫" },
+    { key: "7", kind: "num", label: "7" },
+    { key: "8", kind: "num", label: "8" },
+    { key: "9", kind: "num", label: "9" },
+    { key: "÷", kind: "op", label: "÷" },
+    { key: "4", kind: "num", label: "4" },
+    { key: "5", kind: "num", label: "5" },
+    { key: "6", kind: "num", label: "6" },
+    { key: "×", kind: "op", label: "×" },
+    { key: "1", kind: "num", label: "1" },
+    { key: "2", kind: "num", label: "2" },
+    { key: "3", kind: "num", label: "3" },
+    { key: "−", kind: "op", label: "−" },
+    { key: "%", kind: "op", label: "%" },
+    { key: "0", kind: "num", label: "0" },
+    { key: ".", kind: "num", label: "." },
+    { key: "+", kind: "op", label: "+" },
+    { key: "=", kind: "eq", label: "=" }
+  ];
+}$
+[div = class: "pad"]
+  [for-each = ${ keys }$, as: "k"]
+    [button = class: ${ `key ${k.kind}` }$, type: "button", data-key: ${ k.key }$, tabindex: "-1"]${ k.label }$[end]
+  [end]
+[end:div]
+
+[style]
+  .pad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  @media (max-height: 520px) {
+    .pad {
+      gap: 6px;
+    }
+  }
+  .key {
+    /* 52px when there's room; shorter windows get shorter keys (30px at least) */
+    height: clamp(30px, calc((100vh - 210px) / 6), 52px);
+    font: 500 20px/1 system-ui, sans-serif;
+    color: var(--orbit);
+    background: var(--surface);
+    border: 0;
+    box-shadow: inset 0 1px rgb(255 255 255 / 0.04);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: filter 0.1s, transform 0.1s;
+  }
+  .key:hover {
+    filter: brightness(1.15);
+  }
+  .key:active {
+    transform: scale(0.96);
+  }
+  .num {
+    color: #fff;
+  }
+  .fn {
+    background: var(--surface-low);
+  }
+  .op {
+    font-size: 22px;
+  }
+  .eq {
+    grid-column: 1 / -1;
+    font-size: 24px;
+    color: var(--bg);
+    background: linear-gradient(135deg, var(--result-light), var(--result));
+  }
+[end]
