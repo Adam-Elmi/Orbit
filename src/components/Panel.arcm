@@ -1,0 +1,47 @@
+# ###################
+# Panel: a side panel on the right, from under the top bar to the bottom
+# Props: name (what panelOpen() holds when it's open), label. The body is the content
+# Closes with a click outside it (Esc and the icons are handled elsewhere)
+# ###################
+${ const { name, label } = ArcMoon.props(); }$
+
+runtime ${
+  import { effect } from "arcmoon/reactive";
+  import { panelOpen, closePanel } from "../lib/state.js";
+
+  // open the panel whose data-panel matches (build-time props don't reach the browser)
+  effect(() => {
+    for (const p of document.querySelectorAll("[data-panel]")) p.toggleAttribute("data-open", p.dataset.panel === panelOpen());
+  });
+  document.addEventListener("pointerdown", (e) => {
+    const open = document.querySelector("[data-panel][data-open]");
+    if (open && !open.contains(e.target) && !e.target.closest("[data-panel-button]")) closePanel();
+  });
+}$
+
+[section = class: "panel", data-panel: ${ name }$, aria-label: ${ label }$][slot!][end]
+
+[style]
+  .panel {
+    position: fixed;
+    top: var(--bar);
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(300px, 85vw);
+    padding: 10px 16px 0;
+    background: rgb(11 14 20 / 0.96);
+    backdrop-filter: blur(8px);
+    border-left: 1px solid var(--surface);
+    border-top: 1px solid var(--surface);
+    border-radius: 16px 0 0 0;
+    box-shadow: -12px 0 32px rgb(0 0 0 / 0.35);
+    transform: translateX(105%);
+    transition: transform 0.2s ease-out;
+  }
+  .panel[data-open] {
+    transform: none;
+  }
+[end]
