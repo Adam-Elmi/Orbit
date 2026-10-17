@@ -1,12 +1,12 @@
 # ###################
-# HistoryPanel: the current session's calculations, newest first; click one to use its result
+# HistoryPanel: the current session's calculations, newest first; click one to bring it back
 # The list is drawn by runtime code (no live [for-each] yet), so its items' CSS uses :global
 # ###################
 [import = Panel: "@/components/Panel.arcm" !]
 
 runtime ${
   import { effect } from "arcmoon/reactive";
-  import { now, show, useResult, clearHistory, closePanel } from "../lib/state.js";
+  import { now, show, useLine, clearHistory, closePanel } from "../lib/state.js";
 
   const list = ArcMoon.ref(ArcMoon.defineRef("historyList"));
   effect(() => {
@@ -35,7 +35,7 @@ runtime ${
   const pick = (e) => {
     const item = e.target.closest("[data-at]");
     if (!item) return;
-    useResult(Number(item.dataset.at));
+    useLine(Number(item.dataset.at));
     closePanel();
   };
 }$
@@ -64,13 +64,13 @@ runtime ${
     padding: 4px 10px;
     font: 500 12px/1 system-ui, sans-serif;
     color: var(--orbit);
-    background: var(--surface);
+    background: var(--surface-low);
     border: 0;
     border-radius: 8px;
     cursor: pointer;
   }
   .clear:hover {
-    color: var(--bg);
+    color: var(--on-accent);
     background: var(--result);
   }
   .clear:disabled {
