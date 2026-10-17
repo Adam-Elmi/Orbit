@@ -1,0 +1,125 @@
+# ###################
+# HistoryPanel: the current session's calculations, newest first; click one to use its result
+# The list is drawn by runtime code (no live [for-each] yet), so its items' CSS uses :global
+# ###################
+[import = Panel: "@/components/Panel.arcm" !]
+
+runtime ${
+  import { effect } from "arcmoon/reactive";
+  import { now, show, useResult, clearHistory, closePanel } from "../lib/state.js";
+
+  const list = ArcMoon.ref(ArcMoon.defineRef("historyList"));
+  effect(() => {
+    list.replaceChildren(
+      ...now()
+        .lines.map(({ line, result }, i) => {
+          const item = document.createElement("li");
+          const button = document.createElement("button");
+          const expr = document.createElement("span");
+          const value = document.createElement("span");
+          button.type = "button";
+          button.tabIndex = -1;
+          button.dataset.at = i;
+          expr.className = "h-line";
+          value.className = "h-result";
+          expr.textContent = show(line);
+          value.textContent = `= ${result}`;
+          button.append(expr, value);
+          item.append(button);
+          return item;
+        })
+        .reverse()
+    );
+    list.scrollTop = 0;
+  });
+  const pick = (e) => {
+    const item = e.target.closest("[data-at]");
+    if (!item) return;
+    useResult(Number(item.dataset.at));
+    closePanel();
+  };
+}$
+
+[Panel = name: "history", label: "History"]
+  [div = class: "panel-head"]
+    [span]History[end]
+    [button = class: "clear", type: "button", tabindex: "-1", disabled: runtime ${ now().lines.length === 0 }$, onclick: runtime ${ clearHistory }$]Clear[end]
+  [end]
+  [ol = class: "list", arcm-ref: "historyList", onclick: runtime ${ pick }$][end]
+  [p = class: "empty"]No calculations yet[end]
+[end:Panel]
+
+[style]
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: color-mix(in srgb, var(--orbit) 70%, transparent);
+  }
+  .clear {
+    padding: 4px 10px;
+    font: 500 12px/1 system-ui, sans-serif;
+    color: var(--orbit);
+    background: var(--surface);
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .clear:hover {
+    color: var(--bg);
+    background: var(--result);
+  }
+  .clear:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .list {
+    flex: 1;
+    min-height: 0;
+    margin: 0 -8px;
+    padding: 0 0 8px;
+    overflow-y: auto;
+    list-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface) transparent;
+  }
+  .list :global(button) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0 8px;
+    width: 100%;
+    padding: 6px 8px;
+    font: 15px/1.3 system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .list :global(button:hover) {
+    background: var(--surface);
+  }
+  .list :global(.h-line) {
+    color: color-mix(in srgb, var(--orbit) 65%, transparent);
+  }
+  .list :global(.h-result) {
+    color: var(--result);
+  }
+  .empty {
+    display: none;
+    margin: 0;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 14px;
+    color: color-mix(in srgb, var(--orbit) 50%, transparent);
+  }
+  .list:empty + .empty {
+    display: block;
+  }
+[end]
