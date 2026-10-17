@@ -1,0 +1,139 @@
+# ###################
+# Sessions: one display per session, side by side; the track slides so the current one shows
+# Displays are cloned from the [template] (no live [for-each] yet). Two-finger swipe moves too
+# ###################
+runtime ${
+  import { effect } from "arcmoon/reactive";
+  import { sessions, current, go, work, isPlain, show } from "../lib/state.js";
+
+  const track = ArcMoon.ref(ArcMoon.defineRef("track"));
+  const display = ArcMoon.ref(ArcMoon.defineRef("display"));
+
+  // ###################
+  // Fill one display from its session
+  // ###################
+  const fill = (el, session, isCurrent) => {
+    const value = work(session.input);
+    el.querySelector(".line-text").textContent = show(session.input) || "0";
+    el.querySelector(".result-text").textContent = value ?? "";
+    el.toggleAttribute("data-empty", session.input === "");
+    // the result shows only when it says something new: not for 453, not after Enter
+    el.toggleAttribute("data-show", value !== null && !isPlain(session.input));
+    el.toggleAttribute("data-current", isCurrent);
+  };
+
+  effect(() => {
+    const list = sessions();
+    const at = current();
+    while (track.childElementCount < list.length) track.append(display.content.firstElementChild.cloneNode(true));
+    while (track.childElementCount > list.length) track.lastElementChild.remove();
+    list.forEach((session, i) => fill(track.children[i], session, i === at));
+    track.style.transform = `translateX(${-at * 100}%)`;
+  });
+  // slide only after the first draw, so launching on session 3 doesn't slide there from session 1
+  requestAnimationFrame(() => requestAnimationFrame(() => track.setAttribute("data-ready", "")));
+
+  // ###################
+  // Two-finger swipe (sideways wheel): one session per swipe, then wait for the swipe to end
+  // ###################
+  let swiped = 0;
+  let resting = null;
+  track.addEventListener("wheel", (e) => {
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;   // only sideways swipes move between sessions
+    e.preventDefault();
+    clearTimeout(resting);
+    resting = setTimeout(() => (swiped = 0), 200);
+    if (swiped === Infinity) return;
+    swiped += e.deltaX;
+    if (Math.abs(swiped) > 60) {
+      go(current() + Math.sign(swiped));
+      swiped = Infinity;
+    }
+  }, { passive: false });
+}$
+
+[div = class: "viewport"]
+  [div = class: "track", arcm-ref: "track"][end]
+[end]
+# one session's display; cloned per session
+[template = arcm-ref: "display"]
+  [section = class: "display"]
+    [div = class: "line"][span = class: "line-text"]0[end][span = class: "cursor"][end][end]
+    [div = class: "result"]= [span = class: "result-text"][end][end]
+  [end:section]
+[end:template]
+
+[style]
+  .viewport {
+    flex: 1;
+    min-height: 0;
+    margin: 0 -16px;
+    overflow: hidden;
+  }
+  .track {
+    display: flex;
+    height: 100%;
+  }
+  .track[data-ready] {
+    transition: transform 0.2s ease-out;
+  }
+
+  /* ###################
+     One session's display
+     ################### */
+  .display {
+    flex: 0 0 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 16px;
+    text-align: right;
+  }
+  .line {
+    margin-top: 8px;
+    font-size: 36px;
+    line-height: 1.2;
+    color: #fff;
+    overflow-wrap: anywhere;
+  }
+  .display[data-empty] .line {
+    color: color-mix(in srgb, var(--orbit) 50%, transparent);
+  }
+  .cursor {
+    display: none;
+    width: 2px;
+    height: 0.9em;
+    margin-left: 2px;
+    vertical-align: -0.1em;
+    background: var(--active);
+    animation: blink 1s steps(1) infinite;
+  }
+  .display[data-current] .cursor {
+    display: inline-block;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  .result {
+    min-height: 1.4em;
+    font-size: 22px;
+    color: var(--result);
+    visibility: hidden;
+  }
+  .display[data-show] .result {
+    visibility: visible;
+  }
+
+  /* short windows: smaller text, so the line and its result always show */
+  @media (max-height: 520px) {
+    .line {
+      font-size: 28px;
+    }
+    .result {
+      font-size: 18px;
+    }
+  }
+[end]
