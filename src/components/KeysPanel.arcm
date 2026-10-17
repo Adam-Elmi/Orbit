@@ -1,0 +1,107 @@
+# ###################
+# KeysPanel: every shortcut, in groups, keys drawn as keycaps
+# ###################
+[import = Panel: "@/components/Panel.arcm" !]
+
+${
+  // keys: what to press, each a <kbd>
+  const shortcuts = [
+    { group: "Calculator", items: [
+      { keys: ["0–9", "."], does: "Type a number" },
+      { keys: ["+", "−", "×", "÷"], does: "Operators (also - * x /)" },
+      { keys: ["%"], does: "Percent: 50% = 0.5, 200 + 10% = 220" },
+      { keys: ["(", ")"], does: "Brackets" },
+      { keys: ["Enter"], does: "Put the result in the line (or =)" },
+      { keys: ["Backspace"], does: "Delete one character" },
+      { keys: ["Esc"], does: "Clear the line (or Delete)" }
+    ] },
+    { group: "Sessions", items: [
+      { keys: ["Ctrl", "T"], does: "New session" },
+      { keys: ["Ctrl", "W"], does: "Close session (the last one only clears)" },
+      { keys: ["Ctrl", "1–9"], does: "Go to session 1–9" },
+      { keys: ["Ctrl", "←", "→"], does: "Previous / next session" },
+      { keys: ["Swipe"], does: "Two fingers sideways: previous / next" }
+    ] },
+    { group: "App", items: [
+      { keys: ["Esc"], does: "Close a panel, settings or the about card" },
+      { keys: ["Ctrl", "Q"], does: "Quit Orbit" }
+    ] }
+  ];
+}$
+
+[Panel = name: "keys", label: "Keyboard shortcuts"]
+  [div = class: "panel-head"][span]Keyboard shortcuts[end][end]
+  [div = class: "keys-list"]
+    [for-each = ${ shortcuts }$, as: "g"]
+      [h3]${ g.group }$[end]
+      [dl]
+        [for-each = ${ g.items }$, as: "it"]
+          [dt][for-each = ${ it.keys }$, as: "k"][kbd]${ k }$[end][end][end]
+          [dd]${ it.does }$[end]
+        [end]
+      [end:dl]
+    [end]
+  [end:div]
+[end:Panel]
+
+[style]
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: color-mix(in srgb, var(--orbit) 70%, transparent);
+  }
+
+  /* ###################
+     Keyboard panel: groups of shortcuts, keys drawn as keycaps
+     ################### */
+  .keys-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface) transparent;
+  }
+  .keys-list h3 {
+    margin: 10px 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--active);
+  }
+  .keys-list dl {
+    display: grid;
+    grid-template-columns: 104px 1fr;   /* the same key column in every group */
+    align-items: center;
+    gap: 7px 12px;
+    margin: 0;
+  }
+  .keys-list dt {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .keys-list dd {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.35;
+    color: color-mix(in srgb, var(--orbit) 80%, transparent);
+  }
+  kbd {
+    min-width: 22px;
+    padding: 2px 6px;
+    font: 500 11px/16px system-ui, sans-serif;
+    text-align: center;
+    color: #fff;
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--orbit) 20%, transparent);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+  }
+[end]
