@@ -1,7 +1,7 @@
 # ###################
 # Orbit: the one page
 # Sessions you slide between, each with its line and live result; panels for shortcuts and
-# history, a settings page and an about card. State lives in src/lib/state.js
+# history, a settings page, an about card and a notice. State lives in src/lib/state.js
 # ###################
 [import = TopBar: "@/components/TopBar.arcm" !]
 [import = Sessions: "@/components/Sessions.arcm" !]
@@ -11,6 +11,7 @@
 [import = HistoryPanel: "@/components/HistoryPanel.arcm" !]
 [import = SettingsPage: "@/components/SettingsPage.arcm" !]
 [import = AboutCard: "@/components/AboutCard.arcm" !]
+[import = Toast: "@/components/Toast.arcm" !]
 
 runtime ${
   import "../src/lib/keyboard.js";
@@ -33,14 +34,15 @@ runtime ${
       [HistoryPanel !]
       [SettingsPage !]
       [AboutCard !]
+      [Toast !]
     [end:main]
   [end:body]
 [end:html]
 
 [style]
   /* ###################
-     Colors (Orbit.md §5): a deep ink background and graphite keys;
-     gold, mint and lavender come from orbit-logo.svg
+     Colors (Orbit.md §5): dark by default; data-theme="light" swaps them (Settings → Theme).
+     Gold, mint and lavender come from orbit-logo.svg
      ################### */
   :root {
     --bg: #0b0e14;
@@ -50,7 +52,31 @@ runtime ${
     --result: #f2a93b;
     --result-light: #ffe08a;
     --active: #6ee7c8;
+    --gold: #f2a93b;                   /* the = key, the same in both themes */
+    --ink: #fff;                       /* strong text */
+    --on-accent: #0b0e14;              /* text on mint and gold */
+    --glass: rgb(11 14 20 / 0.96);     /* side panels */
+    --danger: #ff8a8a;
+    --key-shadow: inset 0 1px rgb(255 255 255 / 0.04);
+    --pill-bg: var(--active);          /* chosen chips with text: decimals, session number, badge */
+    --pill-ink: var(--on-accent);
     color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f5fa;
+    --surface: #ffffff;
+    --surface-low: #eceef5;
+    --orbit: #4a4f8c;                  /* the logo's navy, softened */
+    --result: #c97a10;                 /* deeper gold, readable on white */
+    --result-light: #ffd27a;
+    --active: #0f9f80;                 /* deeper mint */
+    --ink: #14163a;
+    --glass: rgb(255 255 255 / 0.95);
+    --danger: #d64545;
+    --key-shadow: 0 1px 2px rgb(20 22 58 / 0.08), inset 0 0 0 1px rgb(20 22 58 / 0.06);
+    --pill-bg: rgb(15 159 128 / 0.14);   /* a soft mint tint with dark-green text */
+    --pill-ink: #0b6e59;
+    color-scheme: light;
   }
   * {
     box-sizing: border-box;
