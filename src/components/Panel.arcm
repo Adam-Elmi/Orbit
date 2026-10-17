@@ -32,16 +32,17 @@ runtime ${
     flex-direction: column;
     width: min(300px, 85vw);
     padding: 10px 16px 0;
-    background: rgb(11 14 20 / 0.96);
+    background: var(--glass);
     backdrop-filter: blur(8px);
     border-left: 1px solid var(--surface);
     border-top: 1px solid var(--surface);
     border-radius: 16px 0 0 0;
-    box-shadow: -12px 0 32px rgb(0 0 0 / 0.35);
     transform: translateX(105%);
-    transition: transform 0.2s ease-out;
+    transition: transform 0.2s ease-out, box-shadow 0.2s;
   }
+  /* the shadow only while open: closed, it would show at the window's edge */
   .panel[data-open] {
     transform: none;
+    box-shadow: -12px 0 32px rgb(0 0 0 / 0.35);
   }
 [end]
