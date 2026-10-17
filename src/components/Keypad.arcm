@@ -1,5 +1,5 @@
 # ###################
-# The keypad: every key is a button with data-key; the page listens for clicks on the whole pad
+# The keypad: every key is a button with data-key; one click handler on the whole pad
 # ###################
 ${
   const keys = [
@@ -26,7 +26,14 @@ ${
     { key: "=", kind: "eq", label: "=" }
   ];
 }$
-[div = class: "pad"]
+runtime ${
+  import { press } from "../lib/state.js";
+  const pick = (e) => {
+    const key = e.target.closest("[data-key]");
+    if (key) press(key.dataset.key);
+  };
+}$
+[div = class: "pad", onclick: runtime ${ pick }$]
   [for-each = ${ keys }$, as: "k"]
     [button = class: ${ `key ${k.kind}` }$, type: "button", data-key: ${ k.key }$, tabindex: "-1"]${ k.label }$[end]
   [end]
