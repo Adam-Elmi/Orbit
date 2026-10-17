@@ -1,0 +1,307 @@
+# ###################
+# SettingsPage: covers the calculator under the top bar; one card per setting,
+# each with a short description and a live preview
+# ###################
+[import = Icon: "@/components/Icon.arcm" !]
+
+${
+  // the same choices as src/lib/settings.js
+  const decimalChoices = ["auto", 2, 4, 6, 10];
+}$
+
+runtime ${
+  import { signal, effect } from "arcmoon/reactive";
+  import { settings, setSetting, sessions, work, panelOpen, closePanel, clearAll } from "../lib/state.js";
+
+  // ###################
+  // Choices carry their value in data- (build-time loop names don't reach the browser)
+  // ###################
+  const page = ArcMoon.ref(ArcMoon.defineRef("settingsPage"));
+  effect(() => {
+    const { decimals, indicator } = settings();
+    for (const b of page.querySelectorAll("[data-decimals]")) b.toggleAttribute("data-active", b.dataset.decimals === String(decimals));
+    for (const b of page.querySelectorAll("[data-indicator]")) b.toggleAttribute("data-active", b.dataset.indicator === indicator);
+  });
+  const pickDecimals = (e) => {
+    const value = e.target.closest("[data-decimals]")?.dataset.decimals;
+    if (value !== undefined) setSetting({ decimals: value === "auto" ? "auto" : Number(value) });
+  };
+  const pickIndicator = (e) => {
+    const value = e.target.closest("[data-indicator]")?.dataset.indicator;
+    if (value) setSetting({ indicator: value });
+  };
+
+  // ###################
+  // Previews: sample results, and what Clear all removes
+  // ###################
+  const sample = (line) => work(line) ?? "";
+  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const clearStats = () => `${plural(sessions().length, "session")} · ${plural(sessions().reduce((n, s) => n + s.lines.length, 0), "calculation")}`;
+
+  // Clear all: the first click asks, a second one within 3 s clears
+  const armed = signal(false);
+  let disarm = null;
+  const askThenClear = () => {
+    clearTimeout(disarm);
+    if (!armed()) {
+      armed(true);
+      disarm = setTimeout(() => armed(false), 3000);
+      return;
+    }
+    armed(false);
+    clearAll();
+  };
+}$
+
+[section = class: "page", aria-label: "Settings", arcm-ref: "settingsPage", data-open: runtime ${ panelOpen() === "settings" }$]
+  [div = class: "page-inner"]
+    [div = class: "page-head"]
+      [button = class: "back", type: "button", tabindex: "-1", aria-label: "Back", onclick: runtime ${ closePanel }$][Icon = name: "back", size: 20 !][end]
+      [h1]Settings[end]
+    [end]
+
+    # decimals: choices, and two sample results that follow the choice
+    [div = class: "card"]
+      [h2]Decimals[end]
+      [p = class: "desc"]How many digits results show after the point.[end]
+      [div = class: "seg", onclick: runtime ${ pickDecimals }$]
+        [for-each = ${ decimalChoices }$, as: "d"]
+          [button = type: "button", tabindex: "-1", data-decimals: ${ String(d) }$]${ d === "auto" ? "Auto" : d }$[end]
+        [end]
+      [end]
+      [div = class: "preview"]
+        [div = class: "sample"][span]1 ÷ 3[end][b]= runtime ${ sample("1÷3") }$[end][end]
+        [div = class: "sample"][span]10 ÷ 4[end][b]= runtime ${ sample("10÷4") }$[end][end]
+      [end]
+    [end:div]
+
+    # indicator: each choice is drawn in its own style
+    [div = class: "card"]
+      [h2]Session indicator[end]
+      [p = class: "desc"]How your sessions show under the display.[end]
+      [div = class: "tiles", onclick: runtime ${ pickIndicator }$]
+        [button = class: "tile", type: "button", tabindex: "-1", data-indicator: "dots"]
+          [span = class: "mini"][i = class: "m-dot"][end][i = class: "m-dot on"][end][i = class: "m-dot"][end][end]
+          [span = class: "tile-name"]Dots[end]
+        [end]
+        [button = class: "tile", type: "button", tabindex: "-1", data-indicator: "numbers"]
+          [span = class: "mini"][i = class: "m-num"]1[end][i = class: "m-num on"]2[end][i = class: "m-num"]3[end][end]
+          [span = class: "tile-name"]Numbers[end]
+        [end]
+      [end]
+    [end:div]
+
+    # clear all: what goes, then a button that asks twice
+    [div = class: "card"]
+      [h2]Clear all sessions[end]
+      [p = class: "desc"]Removes every session and its history. Settings stay.[end]
+      [div = class: "preview stats"]runtime ${ clearStats() }$[end]
+      [button = class: "danger", type: "button", tabindex: "-1", data-armed: runtime ${ armed() }$, onclick: runtime ${ askThenClear }$]runtime ${ armed() ? "Tap again to clear" : "Clear all" }$[end]
+    [end:div]
+  [end:div]
+[end:section]
+
+[style]
+  /* ###################
+     Settings page: slides in over the calculator, cards with a preview each
+     ################### */
+  .page {
+    position: fixed;
+    top: var(--bar);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    overflow-y: auto;
+    background: var(--bg);
+    border-top: 1px solid var(--surface);
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface) transparent;
+    transform: translateX(100%);
+    transition: transform 0.22s ease-out;
+  }
+  .page[data-open] {
+    transform: none;
+  }
+  .page-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px 24px;
+  }
+  .page-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .page-head h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .back {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin-left: -6px;
+    padding: 0;
+    color: var(--orbit);
+    background: none;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .back:hover {
+    background: var(--surface);
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    background: var(--surface-low);
+    border: 1px solid var(--surface);
+    border-radius: 16px;
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .desc {
+    margin: -6px 0 2px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: color-mix(in srgb, var(--orbit) 65%, transparent);
+  }
+
+  /* one row of choices, like a segmented switch */
+  .seg {
+    display: flex;
+    padding: 3px;
+    background: var(--bg);
+    border-radius: 10px;
+  }
+  .seg button {
+    flex: 1;
+    padding: 7px 0;
+    font: 500 13px/1 system-ui, sans-serif;
+    color: color-mix(in srgb, var(--orbit) 80%, transparent);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .seg button:hover {
+    color: #fff;
+  }
+  .seg button[data-active] {
+    color: var(--bg);
+    background: var(--active);
+  }
+
+  /* previews: what the setting does, live */
+  .preview {
+    padding: 10px 12px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    background: var(--bg);
+    border-radius: 10px;
+  }
+  .sample {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+  }
+  .sample span {
+    color: color-mix(in srgb, var(--orbit) 65%, transparent);
+  }
+  .sample b {
+    font-weight: 500;
+    color: var(--result);
+  }
+  .stats {
+    color: var(--orbit);
+  }
+
+  /* indicator tiles: each drawn in its own style */
+  .tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 8px 10px;
+    color: var(--orbit);
+    background: var(--bg);
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .tile:hover {
+    border-color: var(--surface);
+  }
+  .tile[data-active] {
+    border-color: var(--active);
+  }
+  .mini {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 20px;
+  }
+  .m-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--orbit) 55%, transparent);
+  }
+  .m-dot.on {
+    width: 18px;
+    border-radius: 4px;
+    background: var(--active);
+  }
+  .m-num {
+    min-width: 18px;
+    font: 600 11px/18px system-ui, sans-serif;
+    font-style: normal;
+    text-align: center;
+    color: color-mix(in srgb, var(--orbit) 75%, transparent);
+    border-radius: 5px;
+  }
+  .m-num.on {
+    min-width: 28px;
+    color: var(--bg);
+    background: var(--active);
+  }
+  .tile-name {
+    font-size: 13px;
+  }
+
+  .danger {
+    align-self: flex-start;
+    padding: 9px 16px;
+    font: 500 13px/1 system-ui, sans-serif;
+    color: #ff8a8a;
+    background: rgb(255 90 90 / 0.08);
+    border: 1px solid rgb(255 90 90 / 0.25);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .danger:hover,
+  .danger[data-armed] {
+    color: var(--bg);
+    background: #ff8a8a;
+  }
+[end]
