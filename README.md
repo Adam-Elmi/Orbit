@@ -9,7 +9,9 @@
   <img src="https://img.shields.io/badge/state-stable-6ee7c8" alt="Stable">
   <a href="https://github.com/Adam-Elmi/ArcMoon"><img src="https://img.shields.io/badge/built%20with-ArcMoon-b8bdf5" alt="Built with ArcMoon"></a>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/Tauri-2-24c8db?logo=tauri&logoColor=white" alt="Tauri 2"></a>
-  <img src="https://img.shields.io/badge/platform-Linux-1b1d4a?logo=linux&logoColor=white" alt="Linux">
+  <a href="https://github.com/Adam-Elmi/Orbit/releases/latest"><img src="https://img.shields.io/badge/Linux-AppImage%20%7C%20.deb-1b1d4a?logo=linux&logoColor=white" alt="Download for Linux"></a>
+  <a href="https://github.com/Adam-Elmi/Orbit/releases/latest"><img src="https://img.shields.io/badge/Windows-.exe-1b1d4a?logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://github.com/Adam-Elmi/Orbit/releases/latest"><img src="https://img.shields.io/badge/macOS-.dmg-1b1d4a?logo=apple&logoColor=white" alt="Download for macOS"></a>
 </p>
 
 ## What is Orbit?
