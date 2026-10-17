@@ -13,7 +13,9 @@ ${
       { keys: ["(", ")"], does: "Brackets" },
       { keys: ["Enter"], does: "Put the result in the line (or =)" },
       { keys: ["Backspace"], does: "Delete one character" },
-      { keys: ["Esc"], does: "Clear the line (or Delete)" }
+      { keys: ["Esc"], does: "Clear the line (or Delete)" },
+      { keys: ["Ctrl", "C"], does: "Copy the result" },
+      { keys: ["Ctrl", "V"], does: "Paste a number or calculation" }
     ] },
     { group: "Sessions", items: [
       { keys: ["Ctrl", "T"], does: "New session" },
@@ -98,7 +100,7 @@ ${
     padding: 2px 6px;
     font: 500 11px/16px system-ui, sans-serif;
     text-align: center;
-    color: #fff;
+    color: var(--ink);
     background: var(--surface);
     border: 1px solid color-mix(in srgb, var(--orbit) 20%, transparent);
     border-bottom-width: 2px;
