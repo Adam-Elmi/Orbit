@@ -76,7 +76,7 @@ runtime ${
   }
   .dots :global(.num[data-current]) {
     min-width: 36px;
-    color: var(--bg);
-    background: var(--active);
+    color: var(--pill-ink);
+    background: var(--pill-bg);
   }
 [end]
