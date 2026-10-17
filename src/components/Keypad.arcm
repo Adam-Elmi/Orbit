@@ -57,7 +57,7 @@ runtime ${
     color: var(--orbit);
     background: var(--surface);
     border: 0;
-    box-shadow: inset 0 1px rgb(255 255 255 / 0.04);
+    box-shadow: var(--key-shadow);
     border-radius: 14px;
     cursor: pointer;
     transition: filter 0.1s, transform 0.1s;
@@ -69,7 +69,7 @@ runtime ${
     transform: scale(0.96);
   }
   .num {
-    color: #fff;
+    color: var(--ink);
   }
   .fn {
     background: var(--surface-low);
@@ -80,7 +80,7 @@ runtime ${
   .eq {
     grid-column: 1 / -1;
     font-size: 24px;
-    color: var(--bg);
-    background: linear-gradient(135deg, var(--result-light), var(--result));
+    color: var(--on-accent);
+    background: linear-gradient(135deg, #ffe08a, var(--gold));   /* the logo's planet */
   }
 [end]
