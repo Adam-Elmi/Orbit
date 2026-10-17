@@ -35,7 +35,7 @@ Orbit is a desktop calculator with sessions you slide between. Its purpose: calc
   </tr>
 </table>
 
-[Watch the full demo (44 s, MP4)](assets/demo/orbit-demo.mp4)
+https://github.com/user-attachments/assets/cadc3f83-1f6b-4b0a-ae49-05adb91112fa
 
 ## Limitations
 
