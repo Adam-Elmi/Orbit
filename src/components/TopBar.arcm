@@ -115,7 +115,7 @@ runtime ${
     background: var(--surface);
   }
   .close:hover {
-    color: var(--bg);
+    color: var(--on-accent);
     background: var(--result);
   }
 [end]
