@@ -1,10 +1,13 @@
 # ###################
 # Sessions: one display per session, side by side; the track slides so the current one shows
 # Displays are cloned from the [template] (no live [for-each] yet). Two-finger swipe moves too
+# The copy button beside the result copies it; a check shows after any copy (button or Ctrl+C)
 # ###################
+[import = Icon: "@/components/Icon.arcm" !]
+
 runtime ${
   import { effect } from "arcmoon/reactive";
-  import { sessions, current, go, work, isPlain, show } from "../lib/state.js";
+  import { sessions, current, go, work, isPlain, show, copyValue, copy, copied } from "../lib/state.js";
 
   const track = ArcMoon.ref(ArcMoon.defineRef("track"));
   const display = ArcMoon.ref(ArcMoon.defineRef("display"));
@@ -20,6 +23,7 @@ runtime ${
     // the result shows only when it says something new: not for 453, not after Enter
     el.toggleAttribute("data-show", value !== null && !isPlain(session.input));
     el.toggleAttribute("data-current", isCurrent);
+    el.toggleAttribute("data-copy", copyValue(session) !== null);
   };
 
   effect(() => {
@@ -32,6 +36,18 @@ runtime ${
   });
   // slide only after the first draw, so launching on session 3 doesn't slide there from session 1
   requestAnimationFrame(() => requestAnimationFrame(() => track.setAttribute("data-ready", "")));
+
+  // ###################
+  // Copy: the button copies; every copy button shows a check while copied() is set
+  // ###################
+  track.addEventListener("click", (e) => {
+    if (e.target.closest(".copy")) copy();
+  });
+  effect(() => {
+    const on = copied() !== null;
+    sessions();   // new displays get the state too
+    for (const b of track.querySelectorAll(".copy")) b.toggleAttribute("data-copied", on);
+  });
 
   // ###################
   // Two-finger swipe (sideways wheel): one session per swipe, then wait for the swipe to end
@@ -59,7 +75,13 @@ runtime ${
 [template = arcm-ref: "display"]
   [section = class: "display"]
     [div = class: "line"][span = class: "line-text"]0[end][span = class: "cursor"][end][end]
-    [div = class: "result"]= [span = class: "result-text"][end][end]
+    [div = class: "result"]
+      [button = class: "copy", type: "button", tabindex: "-1", aria-label: "Copy", title: "Copy (Ctrl+C)"]
+        [span = class: "i-copy"][Icon = name: "copy", size: 15 !][end]
+        [span = class: "i-check"][Icon = name: "check", size: 15 !][end]
+      [end:button]
+      [span = class: "value"]= [span = class: "result-text"][end][end]
+    [end:div]
   [end:section]
 [end:template]
 
@@ -94,7 +116,7 @@ runtime ${
     margin-top: 8px;
     font-size: 36px;
     line-height: 1.2;
-    color: #fff;
+    color: var(--ink);
     overflow-wrap: anywhere;
   }
   .display[data-empty] .line {
@@ -118,13 +140,54 @@ runtime ${
     }
   }
   .result {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
     min-height: 1.4em;
     font-size: 22px;
     color: var(--result);
+  }
+  .value {
     visibility: hidden;
   }
-  .display[data-show] .result {
+  .display[data-show] .value {
     visibility: visible;
+  }
+
+  /* copy: shown when there's something to copy, in the current display only */
+  .copy {
+    display: none;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    color: color-mix(in srgb, var(--orbit) 70%, transparent);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .display[data-current][data-copy] .copy {
+    display: grid;
+  }
+  .copy:hover {
+    color: var(--orbit);
+    background: var(--surface);
+  }
+  .copy:focus {
+    outline: none;
+  }
+  .i-copy {
+    display: flex;
+  }
+  .i-check,
+  .copy[data-copied] .i-copy {
+    display: none;
+  }
+  .copy[data-copied] .i-check {
+    display: flex;
+    color: var(--active);
   }
 
   /* short windows: smaller text, so the line and its result always show */
