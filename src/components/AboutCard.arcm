@@ -1,0 +1,194 @@
+# ###################
+# AboutCard: opened from the logo; ×, Esc or a click outside closes it
+# Links open in the browser: Tauri's opener, or a new tab in a plain browser
+# ###################
+${
+  import { readFileSync } from "node:fs";
+  const logo = readFileSync(new URL("../../orbit-logo.svg", import.meta.url), "utf8").replace(/<metadata>[\s\S]*?<\/metadata>/, "");
+  // the version from package.json, so it never goes stale
+  const { version } = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"));
+  const REPO = "https://github.com/Adam-Elmi/Orbit";
+}$
+
+runtime ${
+  import { signal, effect } from "arcmoon/reactive";
+  import { aboutOpen, closeAbout } from "../lib/state.js";
+
+  // the purpose's longer text, behind "Read more"; it folds again when the card closes
+  const purposeOpen = signal(false);
+  effect(() => {
+    if (!aboutOpen()) purposeOpen(false);
+  });
+  const outside = (e) => {
+    if (e.target === e.currentTarget) closeAbout();
+  };
+  const openLink = (e) => {
+    const opener = window.__TAURI__?.opener;
+    if (!opener) return;   // the browser follows target="_blank" itself
+    e.preventDefault();
+    opener.openUrl(e.currentTarget.href);
+  };
+}$
+
+[div = class: "about-back", data-open: runtime ${ aboutOpen() }$, onclick: runtime ${ outside }$]
+  [div = class: "about", role: "dialog", aria-label: "About Orbit"]
+    [button = class: "about-close", type: "button", tabindex: "-1", aria-label: "Close", onclick: runtime ${ closeAbout }$]×[end]
+    [span = class: "about-logo"]${ { raw: logo } }$[end]
+    [h2]Orbit[end]
+    [p = class: "about-tag"]A calculator with sessions you slide between[end]
+    [dl]
+      [dt]Creator[end][dd]Adam Elmi[end]
+      [dt]Version[end][dd]${ version }$[end]
+      [dt]State[end][dd][span = class: "state"]Stable[end][end]
+      [dt]Purpose[end]
+      [dd]
+        Calculate without losing your previous calculations.
+        [div = class: "more", data-open: runtime ${ purposeOpen() }$]
+          [p][b]The problem:[end] Most calculators show one calculation at a time. When you start a new one, the old answer is gone, so you have to write it down or work it out again.[end]
+          [p][b]How Orbit helps:[end] Orbit keeps several calculations open at once, each in its own session (like pages). For example, session 1 for your shopping total and session 2 for splitting a bill. Swipe, or press Ctrl+1 and Ctrl+2, to move between them. Every session keeps its numbers and history, even after you close Orbit.[end]
+        [end:div]
+        [button = class: "read-more", type: "button", tabindex: "-1", onclick: runtime ${ () => purposeOpen(!purposeOpen()) }$]runtime ${ purposeOpen() ? "Read less" : "Read more" }$[end]
+      [end:dd]
+      [dt]Repository[end][dd][a = href: ${ REPO }$, target: "_blank", rel: "noopener", onclick: runtime ${ openLink }$]${ REPO.replace("https://", "") }$[end][end]
+    [end:dl]
+  [end:div]
+[end:div]
+
+[style]
+  /* ###################
+     About card
+     ################### */
+  .about-back {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgb(0 0 0 / 0.55);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s;
+  }
+  .about-back[data-open] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .about {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(340px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface) transparent;
+    padding: 24px 20px 18px;
+    background: var(--surface-low);
+    border: 1px solid var(--surface);
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgb(0 0 0 / 0.5);
+    transform: scale(0.96);
+    transition: transform 0.18s;
+  }
+  .about-back[data-open] .about {
+    transform: none;
+  }
+  .about-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font: 18px/1 system-ui, sans-serif;
+    color: var(--orbit);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .about-close:hover {
+    background: var(--surface);
+  }
+  /* raw SVG: no scope attribute */
+  .about-logo :global(svg) {
+    display: block;
+    width: 64px;
+    height: 64px;
+  }
+  .about h2 {
+    margin: 10px 0 2px;
+    font-size: 20px;
+    color: #fff;
+  }
+  .about-tag {
+    margin: 0 0 16px;
+    font-size: 13px;
+    text-align: center;
+    color: color-mix(in srgb, var(--orbit) 65%, transparent);
+  }
+  .about dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 14px;
+    width: 100%;
+    margin: 0;
+    padding-top: 14px;
+    font-size: 13px;
+    border-top: 1px solid var(--surface);
+  }
+  .about dt {
+    color: color-mix(in srgb, var(--orbit) 60%, transparent);
+  }
+  .about dd {
+    margin: 0;
+    line-height: 1.4;
+    color: #fff;
+  }
+  .state {
+    padding: 2px 8px;
+    font-size: 12px;
+    color: var(--bg);
+    background: var(--active);
+    border-radius: 6px;
+  }
+  .more {
+    display: none;
+    margin: 6px 0 0;
+    color: color-mix(in srgb, var(--orbit) 85%, transparent);
+  }
+  .more[data-open] {
+    display: block;
+  }
+  .more p {
+    margin: 0 0 6px;
+  }
+  .more b {
+    font-weight: 600;
+    color: #fff;
+  }
+  .read-more {
+    display: block;
+    margin-top: 4px;
+    padding: 0;
+    font: 500 12px/1.4 system-ui, sans-serif;
+    color: var(--active);
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .read-more:hover {
+    text-decoration: underline;
+  }
+  .about a {
+    color: var(--result);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .about a:hover {
+    text-decoration: underline;
+  }
+[end]
