@@ -1,0 +1,82 @@
+# ###################
+# Indicator: the sessions under the display, as dots or numbers (a setting); the current one in mint
+# Click one to go there. Drawn by runtime code (no live [for-each] yet), so its CSS uses :global
+# ###################
+runtime ${
+  import { effect } from "arcmoon/reactive";
+  import { sessions, current, settings, go } from "../lib/state.js";
+
+  const dots = ArcMoon.ref(ArcMoon.defineRef("dots"));
+  effect(() => {
+    const at = current();
+    const numbers = settings().indicator === "numbers";
+    dots.replaceChildren(
+      ...sessions().map((_, i) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.tabIndex = -1;
+        dot.className = numbers ? "num" : "dot";
+        dot.textContent = numbers ? String(i + 1) : "";
+        dot.dataset.at = i;
+        dot.toggleAttribute("data-current", i === at);
+        dot.setAttribute("aria-label", `Session ${i + 1}`);
+        return dot;
+      })
+    );
+  });
+  const pick = (e) => {
+    const dot = e.target.closest("[data-at]");
+    if (dot) go(Number(dot.dataset.at));
+  };
+}$
+
+[nav = class: "dots", arcm-ref: "dots", onclick: runtime ${ pick }$][end]
+
+[style]
+  /* ###################
+     Dots: inactive in lavender (like the logo's orbit), the current one in mint
+     ################### */
+  .dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    min-height: 10px;
+  }
+  .dots :global(.dot) {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--orbit) 55%, transparent);
+    cursor: pointer;
+    transition: width 0.2s, background 0.2s;
+  }
+  .dots :global(.dot[data-current]) {
+    width: 20px;
+    border-radius: 4px;
+    background: var(--active);
+  }
+  /* numbers: like a status bar's workspaces */
+  .dots :global(.num) {
+    min-width: 24px;
+    height: 20px;
+    padding: 0 6px;
+    font: 600 12px/20px system-ui, sans-serif;
+    color: color-mix(in srgb, var(--orbit) 75%, transparent);
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .dots :global(.num:hover) {
+    color: var(--orbit);
+    background: var(--surface);
+  }
+  .dots :global(.num[data-current]) {
+    min-width: 36px;
+    color: var(--bg);
+    background: var(--active);
+  }
+[end]
