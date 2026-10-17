@@ -16,6 +16,15 @@ effect(() => saveSettings(settings()));
 export const setSetting = (part) => settings({ ...settings(), ...part });
 
 // ###################
+// Theme: light or dark on <html data-theme>; "system" follows the desktop, live
+// ###################
+const prefersLight = globalThis.matchMedia?.("(prefers-color-scheme: light)");
+const systemLight = signal(prefersLight?.matches ?? false);
+prefersLight?.addEventListener("change", (e) => systemLight(e.matches));
+export const isLight = () => settings().theme === "light" || (settings().theme === "system" && systemLight());
+effect(() => globalThis.document?.documentElement.setAttribute("data-theme", isLight() ? "light" : "dark"));
+
+// ###################
 // Sessions: each has the line being typed (with × ÷ −), and its history [{ line, result }]
 // They start as they were saved, and are saved again on every change
 // ###################
@@ -92,9 +101,83 @@ export const press = (key) => {
 };
 
 // ###################
-// History of the current session: use a result again, or clear it
+// Copy: the live result, or the line when it's a finished number; − becomes - so it pastes anywhere
 // ###################
-export const useResult = (i) => change({ input: now().lines[i].result, done: true });
+export const copyValue = (session = now()) => {
+	const value = work(session.input);
+	if (value !== null && !isPlain(session.input)) return value.replace(/−/g, "-");
+	return isPlain(session.input) ? session.input.replace(/−/g, "-") : null;
+};
+
+// ###################
+// The notice near the bottom ("Copied 48", "Pasted 12 × 3"), for 1.5 s;
+// lastNotice keeps the words, so the notice still reads right while it fades out
+// ###################
+export const notice = signal(null);
+export const lastNotice = signal({ label: "", value: "", error: false });
+let unnotice = null;
+const notify = (label, value = "", error = false) => {
+	clearTimeout(unnotice);
+	lastNotice({ label, value, error });
+	notice(label);
+	unnotice = setTimeout(() => notice(null), 1500);
+};
+
+// what was just copied, for the copy button's check mark
+export const copied = signal(null);
+let uncopy = null;
+
+export const copy = async () => {
+	const text = copyValue();
+	if (text === null) return false;
+	try {
+		await navigator.clipboard.writeText(text);
+	} catch {
+		// older webviews: copy through a hidden textarea
+		const area = Object.assign(document.createElement("textarea"), { value: text });
+		document.body.append(area);
+		area.select();
+		document.execCommand("copy");
+		area.remove();
+	}
+	clearTimeout(uncopy);
+	copied(text);
+	uncopy = setTimeout(() => copied(null), 1500);
+	notify("Copied", text);
+	return true;
+};
+
+// ###################
+// Paste: a number or calculation, added to the line like typing. Symbols become the keypad's
+// (* → ×, / → ÷, - → −); spaces, a trailing = and thousands commas (1,234) are dropped.
+// Anything else (letters…) is refused whole, so a paste never leaves half a line
+// ###################
+export const cleanPaste = (text) => {
+	const line = String(text ?? "")
+		.trim()
+		.replace(/=\s*$/, "")
+		.replace(/(\d),(?=\d{3}(\D|$))/g, "$1")
+		.replace(/,/g, ".")
+		.replace(/\s+/g, "")
+		.replace(/[*xX]/g, "×")
+		.replace(/\//g, "÷")
+		.replace(/[-–]/g, "−");
+	return line && line.length <= 200 && /^[0-9.%()+−×÷]+$/.test(line) ? line : null;
+};
+
+export const paste = (text) => {
+	const line = cleanPaste(text);
+	if (line === null) return notify("Can’t paste:", "not a calculation", true);
+	// like a typed key: after Enter, a number starts a new line, an operator goes on
+	const fresh = now().done && !/^[+−×÷%]/.test(line);
+	change({ input: (fresh ? "" : input()) + line, done: false });
+	notify("Pasted", show(line));
+};
+
+// ###################
+// History of the current session: bring a calculation back (25÷5, not 5) to edit or go on, or clear it
+// ###################
+export const useLine = (i) => change({ input: now().lines[i].line, done: false });
 export const clearHistory = () => change({ lines: [] });
 
 // ###################
