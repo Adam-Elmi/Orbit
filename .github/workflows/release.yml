@@ -1,0 +1,77 @@
+# ###################
+# Release: build Orbit on Linux, Windows and macOS, and attach the files to a draft GitHub release
+# Runs when a version tag is pushed (git tag v1.0.0 && git push origin v1.0.0), or by hand
+#   Linux    .AppImage and .deb   (built on Ubuntu 22.04, so the AppImage runs on older systems too)
+#   Windows  .exe installer
+#   macOS    .dmg, one universal build for Apple Silicon and Intel
+# ###################
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            args: --bundles appimage,deb
+          - platform: windows-latest
+            args: --bundles nsis
+          - platform: macos-latest
+            args: --target universal-apple-darwin --bundles dmg
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux libraries for Tauri
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          # macOS builds one app for both chips
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - run: npm ci --ignore-scripts
+
+      - run: npm test
+
+      # builds the page (beforeBuildCommand: npm run build), the app, and uploads the files
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: Orbit v__VERSION__
+          releaseBody: |
+            A calculator with sessions you slide between.
+
+            | System | Download |
+            |---|---|
+            | Linux | `.AppImage` (any distro: make it executable and run it) or `.deb` (Debian, Ubuntu) |
+            | Windows | `.exe` installer |
+            | macOS | `.dmg` (Apple Silicon and Intel) |
+
+            The apps aren't signed yet. On Windows, click "More info → Run anyway". On macOS, right-click Orbit → Open the first time.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
