@@ -9,7 +9,8 @@
 		"watch": "node scripts/watch.js",
 		"test": "vitest run",
 		"dev": "tauri dev",
-		"app": "tauri build"
+		"app": "tauri build",
+		"tauri": "tauri"
 	},
 	"dependencies": {
 		"arcmoon": "^1.0.0",
