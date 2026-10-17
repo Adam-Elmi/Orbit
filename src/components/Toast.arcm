@@ -1,0 +1,72 @@
+# ###################
+# Toast: a short notice near the bottom ("Copied 48", "Pasted 12 × 3"), shown while notice() is set
+# ###################
+[import = Icon: "@/components/Icon.arcm" !]
+
+runtime ${
+  import { notice, lastNotice } from "../lib/state.js";
+}$
+
+[div = class: "toast", role: "status", aria-live: "polite", data-open: runtime ${ notice() !== null }$, data-error: runtime ${ lastNotice().error }$]
+  [span = class: "i-ok"][Icon = name: "check", size: 15 !][end]
+  [span = class: "i-error"][Icon = name: "x", size: 15 !][end]
+  [span]runtime ${ lastNotice().label }$ [b]runtime ${ lastNotice().value }$[end][end]
+[end:div]
+
+[style]
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100% - 32px);
+    padding: 9px 14px;
+    font-size: 13px;
+    color: var(--orbit);
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--active) 35%, transparent);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 12px);
+    transition: opacity 0.18s, transform 0.18s;
+  }
+  .toast[data-open] {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .toast :global(svg) {
+    flex-shrink: 0;
+    color: var(--active);
+  }
+  .toast > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .toast[data-error] {
+    border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  }
+  .i-ok,
+  .i-error {
+    display: flex;
+  }
+  .i-error,
+  .toast[data-error] .i-ok {
+    display: none;
+  }
+  .toast[data-error] .i-error {
+    display: flex;
+  }
+  .toast[data-error] :global(svg) {
+    color: var(--danger);
+  }
+  .toast b {
+    font-weight: 600;
+    color: var(--result);
+  }
+[end]
