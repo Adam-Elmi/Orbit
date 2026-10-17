@@ -36,6 +36,12 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "Utility",
+    "shortDescription": "A calculator with sessions you slide between",
+    "longDescription": "Orbit keeps several calculations open at once, each in its own session. Swipe or press Ctrl+1, Ctrl+2 to move between them. Every session keeps its numbers and history, even after you close Orbit.",
+    "publisher": "Adam Elmi",
+    "copyright": "© 2026 Adam Elmi",
+    "homepage": "https://github.com/Adam-Elmi/Orbit"
   }
 }
