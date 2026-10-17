@@ -21,10 +21,15 @@ runtime ${
     const { decimals, indicator } = settings();
     for (const b of page.querySelectorAll("[data-decimals]")) b.toggleAttribute("data-active", b.dataset.decimals === String(decimals));
     for (const b of page.querySelectorAll("[data-indicator]")) b.toggleAttribute("data-active", b.dataset.indicator === indicator);
+    for (const b of page.querySelectorAll("[data-theme-choice]")) b.toggleAttribute("data-active", b.dataset.themeChoice === settings().theme);
   });
   const pickDecimals = (e) => {
     const value = e.target.closest("[data-decimals]")?.dataset.decimals;
     if (value !== undefined) setSetting({ decimals: value === "auto" ? "auto" : Number(value) });
+  };
+  const pickTheme = (e) => {
+    const value = e.target.closest("[data-theme-choice]")?.dataset.themeChoice;
+    if (value) setSetting({ theme: value });
   };
   const pickIndicator = (e) => {
     const value = e.target.closest("[data-indicator]")?.dataset.indicator;
@@ -59,6 +64,26 @@ runtime ${
       [button = class: "back", type: "button", tabindex: "-1", aria-label: "Back", onclick: runtime ${ closePanel }$][Icon = name: "back", size: 20 !][end]
       [h1]Settings[end]
     [end]
+
+    # theme: each choice drawn as a tiny Orbit in its colors
+    [div = class: "card"]
+      [h2]Theme[end]
+      [p = class: "desc"]Light or dark, or follow your system.[end]
+      [div = class: "tiles three", onclick: runtime ${ pickTheme }$]
+        [button = class: "tile", type: "button", tabindex: "-1", data-theme-choice: "system"]
+          [span = class: "screen system"][i = class: "s-line"][end][i = class: "s-key"][end][end]
+          [span = class: "tile-name"]System[end]
+        [end]
+        [button = class: "tile", type: "button", tabindex: "-1", data-theme-choice: "light"]
+          [span = class: "screen light"][i = class: "s-line"][end][i = class: "s-key"][end][end]
+          [span = class: "tile-name"]Light[end]
+        [end]
+        [button = class: "tile", type: "button", tabindex: "-1", data-theme-choice: "dark"]
+          [span = class: "screen dark"][i = class: "s-line"][end][i = class: "s-key"][end][end]
+          [span = class: "tile-name"]Dark[end]
+        [end]
+      [end]
+    [end:div]
 
     # decimals: choices, and two sample results that follow the choice
     [div = class: "card"]
@@ -139,7 +164,7 @@ runtime ${
     margin: 0;
     font-size: 20px;
     font-weight: 600;
-    color: #fff;
+    color: var(--ink);
   }
   .back {
     display: grid;
@@ -170,7 +195,7 @@ runtime ${
     margin: 0;
     font-size: 15px;
     font-weight: 600;
-    color: #fff;
+    color: var(--ink);
   }
   .desc {
     margin: -6px 0 2px;
@@ -198,11 +223,11 @@ runtime ${
     transition: background 0.15s, color 0.15s;
   }
   .seg button:hover {
-    color: #fff;
+    color: var(--ink);
   }
   .seg button[data-active] {
-    color: var(--bg);
-    background: var(--active);
+    color: var(--pill-ink);
+    background: var(--pill-bg);
   }
 
   /* previews: what the setting does, live */
@@ -281,27 +306,72 @@ runtime ${
   }
   .m-num.on {
     min-width: 28px;
-    color: var(--bg);
-    background: var(--active);
+    color: var(--pill-ink);
+    background: var(--pill-bg);
   }
   .tile-name {
     font-size: 13px;
+  }
+
+  /* theme tiles: three across, each a tiny screen in that theme's own colors (not the tokens) */
+  .tiles.three {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .screen {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 5px;
+    width: 100%;
+    max-width: 72px;
+    height: 46px;
+    padding: 7px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.25);
+  }
+  .screen.dark {
+    background: #0b0e14;
+  }
+  .screen.light {
+    background: #f4f5fa;
+  }
+  .screen.system {
+    background: linear-gradient(135deg, #0b0e14 50%, #f4f5fa 50%);
+  }
+  .s-line {
+    width: 60%;
+    height: 5px;
+    border-radius: 3px;
+    background: #b8bdf5;
+  }
+  .light .s-line {
+    background: #4a4f8c;
+  }
+  .system .s-line {
+    background: #4a4f8c;
+  }
+  .s-key {
+    width: 100%;
+    height: 8px;
+    border-radius: 3px;
+    background: linear-gradient(135deg, #ffe08a, #f2a93b);
   }
 
   .danger {
     align-self: flex-start;
     padding: 9px 16px;
     font: 500 13px/1 system-ui, sans-serif;
-    color: #ff8a8a;
-    background: rgb(255 90 90 / 0.08);
-    border: 1px solid rgb(255 90 90 / 0.25);
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
     border-radius: 10px;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
   }
   .danger:hover,
   .danger[data-armed] {
-    color: var(--bg);
-    background: #ff8a8a;
+    color: var(--on-accent);
+    background: var(--danger);
   }
 [end]
