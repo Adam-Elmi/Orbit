@@ -1,0 +1,121 @@
+# ###################
+# TopBar: the frameless window's own bar. The empty space drags the window (data-tauri-drag-region)
+# Logo (opens About), toolbar (shortcuts, history, settings), then minimize and close (Tauri only)
+# ###################
+[import = Icon: "@/components/Icon.arcm" !]
+
+${
+  // the logo, without the file's metadata block
+  import { readFileSync } from "node:fs";
+  const logo = readFileSync(new URL("../../orbit-logo.svg", import.meta.url), "utf8").replace(/<metadata>[\s\S]*?<\/metadata>/, "");
+}$
+
+runtime ${
+  import { panelOpen, togglePanel, openAbout, minimize, quit, inTauri } from "../lib/state.js";
+  document.documentElement.toggleAttribute("data-tauri", inTauri);
+}$
+
+[header = class: "bar", data-tauri-drag-region: true]
+  [button = class: "logo", type: "button", tabindex: "-1", aria-label: "About Orbit", title: "About Orbit", onclick: runtime ${ openAbout }$]${ { raw: logo } }$[end]
+  [span = class: "grow", data-tauri-drag-region: true][end]
+  [div = class: "tools"]
+    [button = class: "tool", type: "button", tabindex: "-1", aria-label: "Keyboard shortcuts", title: "Keyboard shortcuts", data-panel-button: true, data-active: runtime ${ panelOpen() === "keys" }$, onclick: runtime ${ () => togglePanel("keys") }$][Icon = name: "keyboard" !][end]
+    [button = class: "tool", type: "button", tabindex: "-1", aria-label: "History", title: "History", data-panel-button: true, data-active: runtime ${ panelOpen() === "history" }$, onclick: runtime ${ () => togglePanel("history") }$][Icon = name: "history" !][end]
+    [button = class: "tool", type: "button", tabindex: "-1", aria-label: "Settings", title: "Settings", data-panel-button: true, data-active: runtime ${ panelOpen() === "settings" }$, onclick: runtime ${ () => togglePanel("settings") }$][Icon = name: "gear" !][end]
+  [end:div]
+  [div = class: "window"]
+    [button = class: "win", type: "button", tabindex: "-1", aria-label: "Minimize", onclick: runtime ${ minimize }$]–[end]
+    [button = class: "win close", type: "button", tabindex: "-1", aria-label: "Close", onclick: runtime ${ quit }$]×[end]
+  [end:div]
+[end:header]
+
+[style]
+  /* ###################
+     The top bar: logo, empty space to drag, the toolbar, then minimize and close (Tauri only)
+     ################### */
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: var(--bar);
+    margin: 0 -8px 0 0;
+  }
+  .logo {
+    display: flex;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .logo:hover {
+    transform: scale(1.08);
+  }
+  .logo:focus {
+    outline: none;
+  }
+  /* only the empty drag space gives way when the window is narrow */
+  .logo,
+  .tools,
+  .window,
+  .tool,
+  .win {
+    flex-shrink: 0;
+  }
+  /* the logo is raw SVG, which doesn't get the component's scope */
+  .logo :global(svg) {
+    width: 20px;
+    height: 20px;
+    pointer-events: none;   /* the click goes to the button */
+  }
+  .grow {
+    flex: 1;
+    min-width: 0;
+    align-self: stretch;
+  }
+  .tools,
+  .window {
+    display: flex;
+    gap: 6px;
+  }
+  .window {
+    display: none;
+    padding-left: 6px;
+    margin-left: 4px;
+    border-left: 1px solid var(--surface);
+  }
+  :global(:root[data-tauri]) .window {
+    display: flex;
+  }
+  .tool,
+  .win {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font: 18px/1 system-ui, sans-serif;
+    color: var(--orbit);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .tool:hover,
+  .win:hover {
+    background: var(--surface);
+  }
+  .tool:focus,
+  .win:focus {
+    outline: none;   /* clicked, not tabbed to: tabindex -1 */
+  }
+  .tool[data-active] {
+    color: var(--active);
+    background: var(--surface);
+  }
+  .close:hover {
+    color: var(--bg);
+    background: var(--result);
+  }
+[end]
