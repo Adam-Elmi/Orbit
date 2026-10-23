@@ -1,11 +1,11 @@
 // ###################
-// The keyboard: calculator keys, Esc, and Ctrl shortcuts (1–9 go to a session, ← → move,
+// The keyboard: calculator keys, the caret (← → Home End), Esc, and Ctrl shortcuts (1–9 go to a session, ← → move,
 // T opens, W closes, C copies, V pastes, Q quits). Imported once by the page
 // ###################
 
-import { press, go, open, close, quit, copy, paste, current, aboutOpen, closeAbout, panelOpen, closePanel } from "./state.js";
+import { press, move, moveTo, input, go, open, close, quit, copy, paste, current, aboutOpen, closeAbout, panelOpen, closePanel } from "./state.js";
 
-const KEYBOARD = { "-": "−", "*": "×", x: "×", "/": "÷", ",": ".", Enter: "=", Backspace: "⌫", Escape: "C", Delete: "C" };
+const KEYBOARD = { "-": "−", "*": "×", x: "×", "/": "÷", ",": ".", Enter: "=", Backspace: "⌫", Escape: "C", Delete: "Del" };
 
 const ctrlAction = (k) =>
 	/^[1-9]$/.test(k) ? () => go(Number(k) - 1)
@@ -60,8 +60,14 @@ window.addEventListener("keydown", (e) => {
 		e.preventDefault();
 		return closePanel();
 	}
+	// the caret: ← → one character, Home / End to the ends
+	const caret = { ArrowLeft: () => move(-1), ArrowRight: () => move(1), Home: () => moveTo(0), End: () => moveTo(input().length) }[e.key];
+	if (caret && !e.shiftKey) {
+		e.preventDefault();
+		return caret();
+	}
 	const key = KEYBOARD[e.key] ?? e.key;
-	if (!/^[0-9.%()+−×÷=C⌫]$/.test(key) || (key === "C" && e.key === "C")) return;
+	if (!/^([0-9.%()+−×÷^=C⌫]|Del)$/.test(key) || (key === "C" && e.key === "C")) return;
 	e.preventDefault();
 	press(key);
 });

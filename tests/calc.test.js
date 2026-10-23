@@ -86,9 +86,11 @@ describe("lines that give nothing", () => {
 	])("%j isn't finished", (line) => expect(calc(line)).toBe(null));
 
 	test.each([
-		["2 ^ 3"],
 		["x + 1"],
 		["pi"],
+		["e"],
+		["sqrt(4)"],
+		["2 mod 3"],
 		["sin(1)"],
 		["import({})"],
 		["a = 5"],
@@ -120,4 +122,42 @@ describe("decimals", () => {
 	])("%s with %s → %s", (line, decimals, result) => expect(calc(line, { decimals })).toBe(result));
 
 	test("unfinished lines still give nothing", () => expect(calc("2 +", { decimals: 2 })).toBe(null));
+});
+
+describe("scientific keys: √ ² ^ π ℯ", () => {
+	test.each([
+		["√16", "4"],
+		["√(9+7)", "4"],
+		["√√16", "2"],
+		["√2", "1.4142135623731"],
+		["5²", "25"],
+		["(2+1)²", "9"],
+		["−2²", "-4"],
+		["√16²", "16"],
+		["2^10", "1024"],
+		["2^−1", "0.5"],
+		["π", "3.14159265358979"],
+		["ℯ^2", "7.38905609893065"],
+		["2π", "6.28318530717959"],
+		["2π²", "19.7392088021787"],
+		["3√4", "6"],
+		["2ℯ+3", "8.43656365691809"],
+		["1.5e+21+1", "1.5e+21"]
+	])("%s = %s", (line, result) => expect(calc(line)).toBe(result));
+
+	test.each([["√"], ["√+4"], ["√−4"], ["√(−4)"], ["(−8)^(1/3)"], ["π2"], ["2^"]])("%j gives nothing", (line) => expect(calc(line)).toBe(null));
+});
+
+describe("mod (⊘ in the line)", () => {
+	test.each([
+		["17⊘5", "2"],
+		["−7⊘3", "2"],
+		["7⊘−3", "-2"],
+		["5.5⊘2", "1.5"],
+		["100+17⊘5", "102"],
+		["2×7⊘4", "2"],
+		["(10+7)⊘5", "2"]
+	])("%s = %s", (line, result) => expect(calc(line)).toBe(result));
+
+	test.each([["7⊘0"], ["7⊘"], ["⊘3"], ["7 mod 3"]])("%j gives nothing", (line) => expect(calc(line)).toBe(null));
 });

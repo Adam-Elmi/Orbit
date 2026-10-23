@@ -18,9 +18,18 @@ test.each([
 	["2,5", "2.5"],
 	["12 + 3 =", "12+3"],
 	["50%", "50%"],
-	["6 × 7", "6×7"]
+	["6 × 7", "6×7"],
+	["sqrt(16)", "√(16)"],
+	["2*pi", "2×π"],
+	["e^2", "ℯ^2"],
+	["2 ** 10", "2^10"],
+	["1.5e+21", "1.5e+21"],
+	["1.5e-7", "1.5e−7"],
+	["√2 + 5²", "√2+5²"],
+	["17 mod 5", "17⊘5"],
+	["17 MOD -3", "17⊘−3"]
 ])("%j → %j", (text, line) => expect(cleanPaste(text)).toBe(line));
 
-test.each([[""], ["hello"], ["12 apples"], ["2^3"], ["sin(1)"], [null], ["1".repeat(201)]])("%j is refused", (text) => {
+test.each([[""], ["hello"], ["12 apples"], ["2^y"], ["sin(1)"], ["log(2)"], [null], ["1".repeat(201)]])("%j is refused", (text) => {
 	expect(cleanPaste(text)).toBe(null);
 });

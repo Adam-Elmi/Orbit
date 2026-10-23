@@ -1,7 +1,16 @@
 # ###################
 # The keypad: every key is a button with data-key; one click handler on the whole pad
+# A row of scientific keys (√ x² xʸ π e mod) sits above the basic keys
 # ###################
 ${
+  const science = [
+    { key: "√", label: "√" },
+    { key: "²", label: "x²" },
+    { key: "^", label: "xʸ" },
+    { key: "π", label: "π" },
+    { key: "ℯ", label: "e" },
+    { key: "⊘", label: "mod" }   // the mod key: one symbol in the line, shown as "mod"
+  ];
   const keys = [
     { key: "C", kind: "fn", label: "C" },
     { key: "(", kind: "fn", label: "(" },
@@ -34,25 +43,43 @@ runtime ${
   };
 }$
 [div = class: "pad", onclick: runtime ${ pick }$]
-  [for-each = ${ keys }$, as: "k"]
-    [button = class: ${ `key ${k.kind}` }$, type: "button", data-key: ${ k.key }$, tabindex: "-1"]${ k.label }$[end]
+  [div = class: "science"]
+    [for-each = ${ science }$, as: "k"]
+      [button = class: "key sci", type: "button", data-key: ${ k.key }$, tabindex: "-1"]${ k.label }$[end]
+    [end]
+  [end]
+  [div = class: "basic"]
+    [for-each = ${ keys }$, as: "k"]
+      [button = class: ${ `key ${k.kind}` }$, type: "button", data-key: ${ k.key }$, tabindex: "-1"]${ k.label }$[end]
+    [end]
   [end]
 [end:div]
 
 [style]
   .pad {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .basic,
+  .science {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
   }
+  .science {
+    grid-template-columns: repeat(6, 1fr);
+  }
   @media (max-height: 520px) {
-    .pad {
+    .pad,
+    .basic,
+    .science {
       gap: 6px;
     }
   }
   .key {
-    /* 52px when there's room; shorter windows get shorter keys (30px at least) */
-    height: clamp(30px, calc((100vh - 210px) / 6), 52px);
+    /* 48px when there's room; shorter windows get shorter keys (28px at least) */
+    height: clamp(28px, calc((100vh - 250px) / 6.7), 48px);
     font: 500 20px/1 system-ui, sans-serif;
     color: var(--orbit);
     background: var(--surface);
@@ -76,6 +103,13 @@ runtime ${
   }
   .op {
     font-size: 22px;
+  }
+  /* scientific keys: a lower row, smaller text, in the lavender of the operators */
+  .sci {
+    height: clamp(24px, calc((100vh - 250px) / 9.5), 36px);
+    font-size: 16px;
+    background: var(--surface-low);
+    border-radius: 11px;
   }
   .eq {
     grid-column: 1 / -1;

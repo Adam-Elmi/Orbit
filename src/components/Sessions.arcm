@@ -2,12 +2,13 @@
 # Sessions: one display per session, side by side; the track slides so the current one shows
 # Displays are cloned from the [template] (no live [for-each] yet). Two-finger swipe moves too
 # The copy button beside the result copies it; a check shows after any copy (button or Ctrl+C)
+# The line shrinks to fit (36px down to 20px), then wraps; a click in it places the caret
 # ###################
 [import = Icon: "@/components/Icon.arcm" !]
 
 runtime ${
   import { effect } from "arcmoon/reactive";
-  import { sessions, current, go, work, isPlain, show, copyValue, copy, copied } from "../lib/state.js";
+  import { sessions, current, go, work, isPlain, showAt, shownToCaret, caretOf, moveTo, copyValue, copy, copied } from "../lib/state.js";
 
   const track = ArcMoon.ref(ArcMoon.defineRef("track"));
   const display = ArcMoon.ref(ArcMoon.defineRef("display"));
@@ -17,14 +18,44 @@ runtime ${
   // ###################
   const fill = (el, session, isCurrent) => {
     const value = work(session.input);
-    el.querySelector(".line-text").textContent = show(session.input) || "0";
+    const [left, right] = session.input ? showAt(session.input, caretOf(session)) : ["0", ""];
+    el.querySelector(".left").textContent = left;
+    el.querySelector(".right").textContent = right;
     el.querySelector(".result-text").textContent = value ?? "";
     el.toggleAttribute("data-empty", session.input === "");
     // the result shows only when it says something new: not for 453, not after Enter
     el.toggleAttribute("data-show", value !== null && !isPlain(session.input));
     el.toggleAttribute("data-current", isCurrent);
     el.toggleAttribute("data-copy", copyValue(session) !== null);
+    fit(el);
   };
+
+  // ###################
+  // Fit: the largest size (from the CSS, 2px steps, at least 20px) that keeps the line on one row;
+  // longer lines wrap at 20px and scroll, so the caret stays in view. The result shrinks with it
+  // ###################
+  const MIN = 20;
+  const fit = (el) => {
+    const line = el.querySelector(".line");
+    const result = el.querySelector(".result");
+    line.style.fontSize = result.style.fontSize = "";
+    const base = parseFloat(getComputedStyle(line).fontSize);
+    const baseResult = parseFloat(getComputedStyle(result).fontSize);
+    const text = el.querySelector(".text");
+    let size = base;
+    while (size > MIN && text.offsetHeight > size * 1.2 * 1.5) {
+      size -= 2;
+      line.style.fontSize = `${size}px`;
+    }
+    if (size < base) result.style.fontSize = `${Math.max(18, Math.round((baseResult * size) / base))}px`;
+    const box = line.getBoundingClientRect();
+    const caret = el.querySelector(".cursor").getBoundingClientRect();
+    if (caret.top < box.top) line.scrollTop -= box.top - caret.top;
+    else if (caret.bottom > box.bottom) line.scrollTop += caret.bottom - box.bottom;
+  };
+  addEventListener("resize", () => {
+    for (const el of track.children) fit(el);
+  });
 
   effect(() => {
     const list = sessions();
@@ -41,8 +72,32 @@ runtime ${
   // Copy: the button copies; every copy button shows a check while copied() is set
   // ###################
   track.addEventListener("click", (e) => {
-    if (e.target.closest(".copy")) copy();
+    if (e.target.closest(".copy")) return copy();
+    const el = e.target.closest(".display");
+    if (el?.hasAttribute("data-current") && !el.hasAttribute("data-empty")) placeCaret(el, e);
   });
+
+  // ###################
+  // Click → caret: find the clicked place in the text (before or after the caret's span),
+  // count the characters before it, and drop the spaces show() added
+  // ###################
+  const placeCaret = (el, e) => {
+    const left = el.querySelector(".left");
+    const right = el.querySelector(".right");
+    const at = document.caretPositionFromPoint?.(e.clientX, e.clientY);
+    const range = at ? null : document.caretRangeFromPoint?.(e.clientX, e.clientY);
+    const node = at?.offsetNode ?? range?.startContainer;
+    const offset = at?.offset ?? range?.startOffset ?? 0;
+    let shown;
+    if (node && left.contains(node)) shown = left.textContent.slice(0, offset);
+    else if (node && right.contains(node)) shown = left.textContent + right.textContent.slice(0, offset);
+    else {
+      // beside the text (the empty part of the line): the nearer end
+      const box = el.querySelector(".text").getBoundingClientRect();
+      shown = e.clientX < box.left ? "" : left.textContent + right.textContent;
+    }
+    moveTo(shownToCaret(shown));
+  };
   effect(() => {
     const on = copied() !== null;
     sessions();   // new displays get the state too
@@ -74,7 +129,7 @@ runtime ${
 # one session's display; cloned per session
 [template = arcm-ref: "display"]
   [section = class: "display"]
-    [div = class: "line"][span = class: "line-text"]0[end][span = class: "cursor"][end][end]
+    [div = class: "line"][span = class: "text"][span = class: "left"]0[end][span = class: "cursor"][end][span = class: "right"][end][end][end]
     [div = class: "result"]
       [button = class: "copy", type: "button", tabindex: "-1", aria-label: "Copy", title: "Copy (Ctrl+C)"]
         [span = class: "i-copy"][Icon = name: "copy", size: 15 !][end]
@@ -106,6 +161,7 @@ runtime ${
   .display {
     flex: 0 0 100%;
     min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -113,11 +169,18 @@ runtime ${
     text-align: right;
   }
   .line {
+    min-height: 0;
     margin-top: 8px;
     font-size: 36px;
     line-height: 1.2;
     color: var(--ink);
     overflow-wrap: anywhere;
+    overflow-y: auto;
+    scrollbar-width: none;
+    cursor: text;
+  }
+  .display[data-empty] .line {
+    cursor: default;
   }
   .display[data-empty] .line {
     color: color-mix(in srgb, var(--orbit) 50%, transparent);

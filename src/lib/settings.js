@@ -9,7 +9,8 @@ export const DECIMALS = ["auto", 2, 4, 6, 10];   // auto: up to 15 digits, no tr
 export const INDICATORS = ["dots", "numbers"];      // how the sessions show under the display
 export const THEMES = ["system", "light", "dark"];  // system follows the desktop
 
-export const defaults = () => ({ decimals: "auto", indicator: "dots", theme: "system" });
+// splash: the logo for a moment when Orbit opens
+export const defaults = () => ({ decimals: "auto", indicator: "dots", theme: "system", splash: true });
 
 // saved text → settings
 export const restoreSettings = (text) => {
@@ -19,6 +20,7 @@ export const restoreSettings = (text) => {
 		if (DECIMALS.includes(data?.decimals)) settings.decimals = data.decimals;
 		if (INDICATORS.includes(data?.indicator)) settings.indicator = data.indicator;
 		if (THEMES.includes(data?.theme)) settings.theme = data.theme;
+		if (typeof data?.splash === "boolean") settings.splash = data.splash;
 	} catch {}
 	return settings;
 };
